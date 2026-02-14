@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Helper | Onboarding</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --customer-accent: #6366F1;
+            --helper-accent: #22C55E;
+            --admin-accent: #374151;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --bg-light: #F8FAFF;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --radius: 20px;
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden; /* Prevent body scroll, let panels scroll if needed */
+        }
+
+        /* --- Split Layout --- */
+        .auth-container {
+            width: 450px;
+            min-width: 450px;
+            height: 100vh;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            z-index: 10;
+            box-shadow: 10px 0 50px rgba(0,0,0,0.03);
+            overflow-y: auto;
+        }
+
+        .visual-side {
+            flex-grow: 1;
+            background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* --- Visual Side Decorations --- */
+        .visual-side::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: url('https://www.transparenttextures.com/patterns/cubes.png');
+            opacity: 0.1;
+            animation: drift 60s linear infinite;
+        }
+
+        @keyframes drift {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .hero-content {
+            color: white;
+            text-align: center;
+            z-index: 5;
+            padding: 40px;
+            max-width: 600px;
+        }
+
+        .hero-content h1 { font-size: 3rem; font-weight: 800; line-height: 1.1; margin-bottom: 20px; }
+        .hero-content p { font-size: 1.1rem; opacity: 0.9; margin-bottom: 40px; }
+
+        .floating-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            position: absolute;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* --- Auth Forms --- */
+        header { margin-bottom: 30px; }
+        .logo { font-weight: 800; font-size: 1.5rem; color: var(--customer-accent); display: flex; align-items: center; gap: 8px; }
+        .logo-dot { width: 8px; height: 8px; background: var(--helper-accent); border-radius: 50%; }
+
+        .panel-toggle {
+            display: flex;
+            background: #F3F4F6;
+            padding: 4px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .panel-toggle button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .panel-toggle button.active-customer { background: white; color: var(--customer-accent); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .panel-toggle button.active-helper { background: white; color: var(--helper-accent); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        .form-section { display: none; animation: fadeIn 0.5s ease; }
+        .form-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+        .form-header h2 { font-size: 1.6rem; margin-bottom: 5px; }
+        .form-header p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px; }
+
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.8rem; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            font-family: inherit;
+            transition: var(--transition);
+        }
+
+        input:focus { outline: none; border-color: var(--customer-accent); ring: 2px rgba(99, 102, 241, 0.2); }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: var(--transition);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-customer { background: var(--customer-accent); }
+        .btn-helper { background: var(--helper-accent); }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .action-switcher { text-align: center; margin-top: 20px; font-size: 0.85rem; }
+        .action-switcher span { font-weight: 700; cursor: pointer; color: var(--customer-accent); }
+
+        .admin-link { margin-top: auto; text-align: center; font-size: 0.8rem; color: var(--text-secondary); }
+        .admin-link span { cursor: pointer; text-decoration: underline; }
+
+        /* --- Modal --- */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 350px; position: relative; }
+
+        /* Utilities */
+        .hidden { display: none !important; }
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 900px) {
+            .visual-side { display: none; }
+            .auth-container { width: 100%; min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="auth-container">
+        <header>
+            <div class="logo">
+                <div class="logo-dot"></div>
+                SmartHelper
+            </div>
+        </header>
+
+        <div class="panel-toggle">
+            <button id="tab-cust" class="active-customer">Join as Customer</button>
+            <button id="tab-help">Join as Helper</button>
+        </div>
+
+        <section id="panel-cust" class="form-section active">
+            <div class="form-header">
+                <h2 id="cust-title">Create Account</h2>
+                <p id="cust-desc">Book trusted local helpers in seconds.</p>
+            </div>
+            <form id="form-customer">
+                <div class="input-group cust-reg-field">
+                    <label>Full Name</label>
+                    <input type="text" name="name" placeholder="Alex Johnson" required>
+                </div>
+                <div class="input-group">
+                    <label>Email Address</label>
+                    <input type="email" name="contact" placeholder="alex@example.com" required>
+                </div>
+                <div class="input-group cust-reg-field">
+                    <label>Location</label>
+                    <input type="text" name="location" placeholder="City, State" required>
+                </div>
+                <div class="grid">
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" name="pass" required>
+                    </div>
+                    <div class="input-group cust-reg-field">
+                        <label>Confirm</label>
+                        <input type="password" name="confirm">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-customer">
+                    <span class="btn-text" id="cust-btn-text">Get Started</span>
+                    <div class="spinner"></div>
+                </button>
+            </form>
+            <div class="action-switcher" id="cust-switcher">
+                Already have an account? <span>Login</span>
+            </div>
+        </section>
+
+        <section id="panel-help" class="form-section">
+            <div class="form-header">
+                <h2 id="help-title" style="color: var(--helper-accent)">Become a Helper</h2>
+                <p id="help-desc">Work on your own terms. Earn more.</p>
+            </div>
+            <form id="form-helper">
+                <div class="input-group help-reg-field">
+                    <label>Full Name</label>
+                    <input type="text" name="name" placeholder="Sam Smith" required>
+                </div>
+                <div class="grid">
+                    <div class="input-group">
+                        <label>Email</label>
+                        <input type="email" name="email" placeholder="helper@email.com" required>
+                    </div>
+                    <div class="input-group help-reg-field">
+                        <label>Experience</label>
+                        <input type="number" name="exp" placeholder="Years" required>
+                    </div>
+                </div>
+                <div class="input-group help-reg-field">
+                    <label>Skills</label>
+                    <select name="skills">
+                        <option value="Plumbing">Plumbing</option>
+                        <option value="Electrician">Electrician</option>
+                        <option value="Carpenter">Carpenter</option>
+                        <option value="Painting">Painting</option>
+                        <option value="Cleaner">Cleaner </option>
+                        <option value="AC Repair">AC Repair</option>
+                        <option value="Appliance Repair">Appliance Repair</option>
+                    </select>
+                </div>
+                <div class="grid">
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" name="pass" required>
+                    </div>
+                    <div class="input-group help-reg-field">
+                        <label>Confirm</label>
+                        <input type="password" name="confirm">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-helper">
+                    <span class="btn-text" id="help-btn-text">Register as Helper</span>
+                    <div class="spinner"></div>
+                </button>
+            </form>
+            <div class="action-switcher" id="help-switcher">
+                Already a helper? <span style="color: var(--helper-accent)">Login</span>
+            </div>
+        </section>
+
+        <div class="admin-link">
+            System Administrator? <span id="open-admin">Admin Portal</span>
+        </div>
+    </aside>
+
+    <main class="visual-side">
+        <div class="floating-card" style="top: 20%; left: 10%; animation-delay: 0s;">
+            <div style="background: #FFF; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;">⭐</div>
+            <div>
+                <strong style="display: block; font-size: 0.9rem;">4.9/5 Rating</strong>
+                <span style="font-size: 0.7rem; opacity: 0.8;">Average Helper Score</span>
+            </div>
+        </div>
+
+        <div class="floating-card" style="bottom: 25%; right: 15%; animation-delay: 1s;">
+            <div style="background: #22C55E; width: 10px; height: 10px; border-radius: 50%;"></div>
+            <span style="font-size: 0.8rem; font-weight: 600;">1,240 Helpers Online</span>
+        </div>
+
+        <div class="hero-content">
+            <h1>The smarter way to get things done.</h1>
+            <p>Our auto-assignment algorithm matches your task with the best available professional in your area instantly.</p>
+        </div>
+    </main>
+
+    <div class="modal" id="admin-modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Admin Login</h2>
+            <form id="form-admin">
+                <div class="input-group"><label>Admin ID</label><input type="text" required></div>
+                <div class="input-group"><label>Passkey</label><input type="password" required></div>
+                <button type="submit" class="btn btn-customer" style="background: var(--admin-accent)">Verify Identity</button>
+            </form>
+            <p id="close-admin" style="text-align: center; margin-top: 15px; font-size: 0.8rem; cursor: pointer; opacity: 0.6;">Cancel</p>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { 
+      getAuth, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { 
+        getFirestore, 
+        doc, 
+        setDoc, 
+        getDoc 
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ===========================
+   🔥 1. FIREBASE CONFIG
+=========================== */
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyDN7IYjTiwxYHanyRqXNlIvF3kEj5-mFN8",
+    authDomain: "hack-11e58.firebaseapp.com",
+    projectId: "hack-11e58",
+    storageBucket: "hack-11e58.firebasestorage.app",
+    messagingSenderId: "199897526947",
+    appId: "1:199897526947:web:8b878c57bfa52148eb0516",
+    measurementId: "G-VS496BDVEY"
+  };
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+
+
+
+const state = { cust: 'reg', help: 'reg' };
+
+const tabCust = document.getElementById('tab-cust');
+const tabHelp = document.getElementById('tab-help');
+const panelCust = document.getElementById('panel-cust');
+const panelHelp = document.getElementById('panel-help');
+
+tabCust.onclick = () => {
+  tabCust.classList.add('active-customer');
+  tabHelp.classList.remove('active-helper');
+  panelCust.classList.add('active');
+  panelHelp.classList.remove('active');
+};
+
+tabHelp.onclick = () => {
+  tabHelp.classList.add('active-helper');
+  tabCust.classList.remove('active-customer');
+  panelHelp.classList.add('active');
+  panelCust.classList.remove('active');
+};
+
+function toggleUI(role) {
+  state[role] = state[role] === 'reg' ? 'login' : 'reg';
+  const isReg = state[role] === 'reg';
+
+  const fields = document.querySelectorAll(`.${role}-reg-field`);
+  fields.forEach(f => f.classList.toggle('hidden', !isReg));
+
+  document.getElementById(`${role}-title`).innerText =
+    isReg ? (role === 'cust' ? 'Create Account' : 'Become a Helper') : 'Welcome Back';
+
+  document.getElementById(`${role}-btn-text`).innerText =
+    isReg ? (role === 'cust' ? 'Get Started' : 'Register as Helper') : 'Login';
+
+  const switcher = document.getElementById(`${role}-switcher`);
+  switcher.childNodes[0].nodeValue =
+    isReg ? 'Already have an account? ' : 'New here? ';
+  switcher.querySelector('span').innerText =
+    isReg ? 'Login' : 'Create Account';
+}
+
+document.getElementById('cust-switcher').onclick = () => toggleUI('cust');
+document.getElementById('help-switcher').onclick = () => toggleUI('help');
+
+
+
+async function registerUser(payload) {
+
+  const userCredential = await createUserWithEmailAndPassword(
+    auth,
+    payload.email,
+    payload.password
+  );
+
+  const user = userCredential.user;
+
+  await setDoc(doc(db, "users", user.uid), {
+    uid: user.uid,
+    email: payload.email,
+    role: payload.role,
+    fullName: payload.fullName || null,
+    location: payload.location || null,
+    skills: payload.skills || [],
+    experience: payload.experience || null,
+    status: payload.role === "helper" ? "available" : null,
+    rating: 5,
+    createdAt: new Date()
+  });
+}
+
+// login 
+
+async function loginUser(payload) {
+
+
+
+  const userCredential = await signInWithEmailAndPassword(
+    auth,
+    payload.email,
+    payload.password
+  );
+
+  const user = userCredential.user;
+
+  const docSnap = await getDoc(doc(db, "users", user.uid));
+
+  if (!docSnap.exists()) {
+    throw new Error("Profile not found");
+  }
+
+  const profile = docSnap.data();
+
+  // 🔍 If role mismatch, automatically switch tab instead of throwing error
+  if (profile.role !== payload.intendedRole) {
+
+    if (profile.role === "helper") {
+      tabHelp.click();
+    } else {
+      tabCust.click();
+    }
+
+    alert(`You are registered as ${profile.role}. Please login from correct panel.`);
+    return;
+  }
+
+  // Save session
+  localStorage.setItem("user", JSON.stringify(profile));
+
+  // Redirect properly
+  if (profile.role === "helper") {
+    window.location.replace("helper.html");
+  } else {
+    window.location.replace("user-dashboard.html");
+  }
+}
+
+
+
+// form
+
+async function handleForm(e, role) {
+  e.preventDefault();
+
+
+
+
+  const form = e.target;
+  const btn = form.querySelector('button');
+  const isRegistering = state[role] === 'reg';
+
+  toggleLoading(btn, true);
+
+  const formData = new FormData(form);
+
+  let payload = {
+    email: role === "cust"
+      ? formData.get("contact")
+      : formData.get("email"),
+    password: formData.get("pass"),
+    intendedRole: role === "cust" ? "user" : "helper"
+  };
+
+  if (isRegistering) {
+
+    if (payload.password !== formData.get("confirm")) {
+      alert("Passwords do not match");
+      toggleLoading(btn, false);
+      return;
+    }
+
+    if (role === "cust") {
+      payload.role = "user";
+      payload.fullName = formData.get("name");
+      payload.location = formData.get("location");
+    } else {
+      payload.role = "helper";
+      payload.fullName = formData.get("name");
+      payload.skills = [formData.get("skills")];
+      payload.experience = formData.get("exp");
+    }
+  }
+
+  try {
+    if (isRegistering) {
+      await registerUser(payload);
+      alert("Account created successfully. Please login.");
+      toggleUI(role);
+    } else {
+      await loginUser(payload);
+    }
+
+  } catch (err) {
+    alert(err.message);
+    console.error(err);
+  } finally {
+    toggleLoading(btn, false);
+  }
+}
+
+function toggleLoading(btn, isLoading) {
+  const text = btn.querySelector('.btn-text');
+  const spinner = btn.querySelector('.spinner');
+
+  if (isLoading) {
+    text.classList.add('hidden');
+    spinner.style.display = 'block';
+  } else {
+    text.classList.remove('hidden');
+    spinner.style.display = 'none';
+  }
+}
+
+document.getElementById('form-customer')
+  .addEventListener('submit', (e) => handleForm(e, 'cust'));
+
+document.getElementById('form-helper')
+  .addEventListener('submit', (e) => handleForm(e, 'help'));
+
+</script>
+
+</body>
+</html>

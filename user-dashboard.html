@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Tracker - Track Your Orders</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .booking-form {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #1e40af;
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30, 64, 175, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .bookings-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+
+        .bookings-header {
+            color: #374151;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .booking-count {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+
+        .booking-item {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .booking-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border-color: #1e40af;
+        }
+
+        .booking-item.active {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+        }
+
+        .booking-name {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+
+        .booking-type {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .booking-coords {
+            font-size: 11px;
+            opacity: 0.7;
+            font-family: 'Courier New', monospace;
+        }
+
+        .booking-time {
+            font-size: 11px;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+
+        .map-container {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        /* Custom scrollbar */
+        .bookings-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .bookings-list::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 10px;
+        }
+
+        .bookings-list::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+            }
+
+            .sidebar {
+                height: auto;
+            }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 5px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .delete-btn {
+            background: rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        /* Custom Popup Modal */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup-overlay.active {
+            display: flex;
+        }
+
+        .popup-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            animation: popupSlideIn 0.3s ease-out;
+        }
+
+        @keyframes popupSlideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .popup-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+
+        .popup-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+
+        .popup-message {
+            font-size: 15px;
+            color: #6b7280;
+            margin-bottom: 25px;
+        }
+
+        .popup-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .popup-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .popup-btn-confirm {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(30, 64, 175, 0.4);
+        }
+
+        .popup-btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(30, 64, 175, 0.6);
+        }
+
+        .popup-btn-cancel {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .popup-btn-cancel:hover {
+            background: #e5e7eb;
+        }
+
+        /* Inactive booking styling */
+        .booking-item.inactive {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            opacity: 0.7;
+        }
+
+        .status-badge.inactive {
+            background: rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+        }
+
+        /* Custom User Location Marker */
+        .user-location-marker {
+            background: none !important;
+            border: none !important;
+        }
+
+        .user-location-pin {
+            width: 50px;
+            height: 50px;
+            border-radius: 50% 50% 50% 0;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            position: absolute;
+            transform: rotate(-45deg);
+            left: 50%;
+            top: 50%;
+            margin: -40px 0 0 -25px;
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5);
+            animation: bounce 2s infinite;
+        }
+
+        .user-location-pin::after {
+            content: '';
+            width: 24px;
+            height: 24px;
+            margin: 13px 0 0 13px;
+            background: white;
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        .user-location-pulse {
+            background: rgba(239, 68, 68, 0.3);
+            border-radius: 50%;
+            height: 28px;
+            width: 28px;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            margin: 3px 0 0 -14px;
+            transform: rotateX(55deg);
+            z-index: -2;
+            animation: pulsate 2s ease-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0) rotate(-45deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(-45deg);
+            }
+        }
+
+        @keyframes pulsate {
+            0% {
+                transform: scale(0.1, 0.1) rotateX(55deg);
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.2, 1.2) rotateX(55deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes newBookingPulse {
+            0%, 100% {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(30, 64, 175, 0.6);
+                transform: scale(1.02);
+            }
+        }
+
+        .booking-item.new-booking {
+            animation: newBookingPulse 1.5s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="header">
+                <h1>📍 Booking Tracker</h1>
+                <p class="subtitle">Track your bookings in real-time</p>
+            </div>
+
+            <div class="booking-form">
+                <div class="form-group">
+                    <label>Customer Name</label>
+                    <input type="text" id="customerName" placeholder="Enter customer name" />
+                </div>
+                <div class="form-group">
+                    <label>Activity Type</label>
+                    <select id="bookingType">
+                        <option value="Plumbing">🔧 Plumbing</option>
+                        <option value="Electrician">💡 Electrician</option>
+                        <option value="Carpenter">🪚 Carpenter</option>
+                        <option value="Painting">🎨 Painting</option>
+                        <option value="Cleaning">🧹 Cleaning</option>
+                        <option value="AC Repair">❄️ AC Repair</option>
+                        <option value="Appliance Repair">🔌 Appliance Repair</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>📍 Address</label>
+                    <input type="text" id="address" placeholder="Enter address" />
+                </div>
+                <button class="btn" onclick="addBooking()">📍 Book & Track</button>
+            </div>
+
+            <div class="bookings-list" id="bookingsList">
+                <div class="bookings-header">
+                    <span>All Bookings</span>
+                    <span class="booking-count" id="bookingCount">0</span>
+                </div>
+                <div class="empty-state">
+                    <svg fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h6a1 1 0 100-2H7zm0 4a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                    </svg>
+                    <p>No bookings yet</p>
+                    <p style="font-size: 12px; margin-top: 5px;">Create your first booking to get started</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <!-- Custom Popup Modal -->
+    <div class="popup-overlay" id="popupOverlay">
+        <div class="popup-content">
+            <div class="popup-icon">❓</div>
+            <div class="popup-title">Mark as Inactive?</div>
+            <div class="popup-message">Do you want to mark this booking as inactive?</div>
+            <div class="popup-buttons">
+                <button class="popup-btn popup-btn-cancel" onclick="closePopup()">Cancel</button>
+                <button class="popup-btn popup-btn-confirm" onclick="confirmDeactivate()">Yes, Mark Inactive</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize map
+        let map = L.map('map').setView([28.7041, 77.1025], 13); // Default: Delhi
+        let markers = [];
+        let polylines = []; // Store polylines for connections
+        let bookings = [];
+        let userLocation = null;
+
+        // Add tile layer with a soft theme
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Get user location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                map.setView([userLocation.lat, userLocation.lng], 15);
+                
+                // Add user location marker
+                L.marker([userLocation.lat, userLocation.lng], {
+                    icon: L.divIcon({
+                        className: 'user-location-marker',
+                        html: '<div class="user-location-pin"></div><div class="user-location-pulse"></div>',
+                        iconSize: [50, 50],
+                        iconAnchor: [25, 50]
+                    })
+                }).addTo(map).bindPopup('<strong style="color: #ef4444;">📍 Your Location</strong>');
+            }, function() {
+                showAlert('Unable to get your location. Using default location.', '📍');
+            });
+        }
+
+        // Generate random location within 100 meters
+        function getRandomLocationNearby(lat, lng, radiusInMeters = 100) {
+            const radiusInDegrees = radiusInMeters / 111000;
+            
+            const u = Math.random();
+            const v = Math.random();
+            const w = radiusInDegrees * Math.sqrt(u);
+            const t = 2 * Math.PI * v;
+            const x = w * Math.cos(t);
+            const y = w * Math.sin(t);
+            
+            return {
+                lat: lat + x,
+                lng: lng + y
+            };
+        }
+
+        // Custom alert popup
+        function showAlert(message, icon = '⚠️') {
+            const overlay = document.getElementById('popupOverlay');
+            const popup = overlay.querySelector('.popup-content');
+            
+            popup.innerHTML = `
+                <div class="popup-icon">${icon}</div>
+                <div class="popup-title">Notice</div>
+                <div class="popup-message">${message}</div>
+                <div class="popup-buttons">
+                    <button class="popup-btn popup-btn-confirm" onclick="closePopup()">OK</button>
+                </div>
+            `;
+            
+            overlay.classList.add('active');
+        }
+
+        // Add booking
+        function addBooking() {
+            const customerName = document.getElementById('customerName').value.trim();
+            const bookingType = document.getElementById('bookingType').value;
+            const address = document.getElementById('address').value.trim();
+
+            if (!customerName) {
+                showAlert('Please enter customer name', '👤');
+                return;
+            }
+
+            if (!address) {
+                showAlert('Please enter address', '📍');
+                return;
+            }
+
+            if (!userLocation) {
+                showAlert('Getting your location... Please try again in a moment.', '🌍');
+                return;
+            }
+
+            // Generate random location within 100 meters
+            const randomLocation = getRandomLocationNearby(userLocation.lat, userLocation.lng);
+
+            // Create booking object
+            const booking = {
+                id: Date.now(),
+                customerName,
+                bookingType,
+                address,
+                lat: randomLocation.lat,
+                lng: randomLocation.lng,
+                time: new Date().toLocaleString(),
+                status: 'active',
+                newlyAdded: true
+            };
+
+            bookings.push(booking);
+            
+            // Remove newlyAdded flag after 2 seconds
+            setTimeout(() => {
+                booking.newlyAdded = false;
+                updateBookingsList();
+            }, 2000);
+
+            // Add marker to map
+            const marker = L.marker([randomLocation.lat, randomLocation.lng], {
+                icon: L.divIcon({
+                    className: 'booking-marker',
+                    html: getMarkerIcon(bookingType),
+                    iconSize: [40, 40]
+                })
+            }).addTo(map);
+
+            marker.bindPopup(`
+                <div style="text-align: center;">
+                    <strong style="font-size: 15px;">customer: ${customerName}</strong><br>
+                    <span style="color: #1e40af;">${bookingType}</span><br>
+                    <span style="color: #374151;">📍 ${address}</span><br>
+                    <small style="color: #6b7280;">${booking.time}</small>
+                </div>
+            `);
+
+            // Draw line from user location to booking location
+            const polyline = L.polyline([
+                [userLocation.lat, userLocation.lng],
+                [randomLocation.lat, randomLocation.lng]
+            ], {
+                color: '#1e40af',
+                weight: 3,
+                opacity: 0.7,
+                dashArray: '10, 10',
+                className: 'route-line'
+            }).addTo(map);
+
+            markers.push({ id: booking.id, marker });
+            polylines.push({ id: booking.id, polyline });
+
+            // Update UI immediately
+            updateBookingsList();
+            clearForm();
+            
+            // Scroll to top of bookings list to show new booking
+            setTimeout(() => {
+                const bookingsList = document.getElementById('bookingsList');
+                bookingsList.scrollTop = 0;
+            }, 100);
+
+            // Pan to new marker
+            map.setView([randomLocation.lat, randomLocation.lng], 16);
+            marker.openPopup();
+        }
+
+        // Get marker icon based on booking type
+        function getMarkerIcon(type) {
+            const icons = {
+                'Plumbing': '🔧',
+                'Electrician': '💡',
+                'Carpenter': '🪚',
+                'Painting': '🎨',
+                'Cleaning': '🧹',
+                'AC Repair': '❄️',
+                'Appliance Repair': '🔌'
+            };
+            return `<div style="font-size: 24px;">${icons[type] || '📍'}</div>`;
+        }
+
+        // Update bookings list - FIXED VERSION
+        function updateBookingsList() {
+            const listContainer = document.getElementById('bookingsList');
+            
+            if (bookings.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="bookings-header">
+                        <span>All Bookings</span>
+                        <span class="booking-count">0</span>
+                    </div>
+                    <div class="empty-state">
+                        <svg fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h6a1 1 0 100-2H7zm0 4a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                        </svg>
+                        <p>No bookings yet</p>
+                        <p style="font-size: 12px; margin-top: 5px;">Create your first booking to get started</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Create bookings HTML
+            let bookingsHTML = '';
+            bookings.slice().reverse().forEach(booking => {
+                const statusClass = booking.status === 'inactive' ? 'inactive' : '';
+                const newClass = booking.newlyAdded ? 'new-booking' : '';
+                const statusBadgeClass = booking.status === 'inactive' ? 'inactive' : '';
+                const statusText = booking.status === 'inactive' ? '❌ Inactive' : '✅ Active';
+                const buttonText = booking.status === 'inactive' ? '🗑️ Delete' : '❌ Mark Inactive';
+                
+                bookingsHTML += `
+                    <div class="booking-item ${statusClass} ${newClass}" onclick="focusBooking(${booking.id})">
+                        <div class="booking-name">Customer: ${booking.customerName}</div>
+                        <div class="booking-type">${booking.bookingType}</div>
+                        <div class="booking-type">📍 ${booking.address}</div>
+                        <div class="status-badge ${statusBadgeClass}">${statusText}</div>
+                        <div class="booking-coords">📍 ${booking.lat.toFixed(6)}, ${booking.lng.toFixed(6)}</div>
+                        <div class="booking-time">🕒 ${booking.time}</div>
+                        <button class="delete-btn" onclick="handleBookingAction(event, ${booking.id})">${buttonText}</button>
+                    </div>
+                `;
+            });
+
+            // Update the entire list container with header and bookings
+            listContainer.innerHTML = `
+                <div class="bookings-header">
+                    <span>All Bookings</span>
+                    <span class="booking-count">${bookings.length}</span>
+                </div>
+                ${bookingsHTML}
+            `;
+        }
+
+        // Focus on booking
+        function focusBooking(id) {
+            const booking = bookings.find(b => b.id === id);
+            const markerObj = markers.find(m => m.id === id);
+            
+            if (booking && markerObj) {
+                map.setView([booking.lat, booking.lng], 17);
+                markerObj.marker.openPopup();
+            }
+        }
+
+        // Handle booking action (mark inactive or delete)
+        let bookingToDelete = null;
+        let permanentDelete = false;
+
+        function handleBookingAction(event, id) {
+            event.stopPropagation();
+            
+            const booking = bookings.find(b => b.id === id);
+            if (!booking) return;
+
+            bookingToDelete = id;
+
+            // If already inactive, show permanent delete confirmation
+            if (booking.status === 'inactive') {
+                permanentDelete = true;
+                const overlay = document.getElementById('popupOverlay');
+                const popup = overlay.querySelector('.popup-content');
+                
+                popup.innerHTML = `
+                    <div class="popup-icon">🗑️</div>
+                    <div class="popup-title">Permanently Delete?</div>
+                    <div class="popup-message">This will permanently delete this booking. This action cannot be undone.</div>
+                    <div class="popup-buttons">
+                        <button class="popup-btn popup-btn-cancel" onclick="closePopup()">Cancel</button>
+                        <button class="popup-btn popup-btn-confirm" onclick="confirmPermanentDelete()">Yes, Delete</button>
+                    </div>
+                `;
+                
+                overlay.classList.add('active');
+            } else {
+                // Show popup to mark as inactive
+                permanentDelete = false;
+                const overlay = document.getElementById('popupOverlay');
+                const popup = overlay.querySelector('.popup-content');
+                
+                popup.innerHTML = `
+                    <div class="popup-icon">❓</div>
+                    <div class="popup-title">Mark as Inactive?</div>
+                    <div class="popup-message">Do you want to mark this booking as inactive?</div>
+                    <div class="popup-buttons">
+                        <button class="popup-btn popup-btn-cancel" onclick="closePopup()">Cancel</button>
+                        <button class="popup-btn popup-btn-confirm" onclick="confirmDeactivate()">Yes, Mark Inactive</button>
+                    </div>
+                `;
+                
+                overlay.classList.add('active');
+            }
+        }
+
+        function closePopup() {
+            document.getElementById('popupOverlay').classList.remove('active');
+            bookingToDelete = null;
+            permanentDelete = false;
+        }
+
+        function confirmPermanentDelete() {
+            if (bookingToDelete) {
+                // Remove from bookings array
+                bookings = bookings.filter(b => b.id !== bookingToDelete);
+                
+                // Remove marker from map
+                const markerObj = markers.find(m => m.id === bookingToDelete);
+                if (markerObj) {
+                    map.removeLayer(markerObj.marker);
+                    markers = markers.filter(m => m.id !== bookingToDelete);
+                }
+                
+                // Remove polyline from map
+                const polylineObj = polylines.find(p => p.id === bookingToDelete);
+                if (polylineObj) {
+                    map.removeLayer(polylineObj.polyline);
+                    polylines = polylines.filter(p => p.id !== bookingToDelete);
+                }
+                
+                updateBookingsList();
+            }
+            closePopup();
+        }
+
+        function confirmDeactivate() {
+            if (bookingToDelete) {
+                const booking = bookings.find(b => b.id === bookingToDelete);
+                if (booking) {
+                    booking.status = 'inactive';
+                    
+                    // Update marker popup to show inactive status
+                    const markerObj = markers.find(m => m.id === bookingToDelete);
+                    if (markerObj) {
+                        markerObj.marker.setPopupContent(`
+                            <div style="text-align: center;">
+                                <strong style="font-size: 15px;">customer: ${booking.customerName}</strong><br>
+                                <span style="color: #1e40af;">${booking.bookingType}</span><br>
+                                <span style="color: #374151;">📍 ${booking.address}</span><br>
+                                <span style="color: #dc2626; font-weight: 600;">❌ Inactive</span><br>
+                                <small style="color: #6b7280;">${booking.time}</small>
+                            </div>
+                        `);
+                    }
+                    
+                    // Change polyline to gray for inactive
+                    const polylineObj = polylines.find(p => p.id === bookingToDelete);
+                    if (polylineObj) {
+                        polylineObj.polyline.setStyle({
+                            color: '#9ca3af',
+                            opacity: 0.4
+                        });
+                    }
+                    
+                    updateBookingsList();
+                }
+            }
+            closePopup();
+        }
+
+        // Close popup when clicking outside
+        document.getElementById('popupOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePopup();
+            }
+        });
+
+        // Clear form
+        function clearForm() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('address').value = '';
+            document.getElementById('bookingType').selectedIndex = 0;
+        }
+    </script>
+</body>
+</html>
