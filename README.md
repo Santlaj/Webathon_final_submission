@@ -115,7 +115,7 @@ Webathon_final_submission/
 
 1️⃣ Clone the repository  
 
-   git clone https://github.com/Armaan2104/Webathon_final_submission.git  
+   git clone https://github.com/Santlaj/Webathon_final_submission  
 
 2️⃣ Open the project folder  
 
